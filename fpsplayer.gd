@@ -3,6 +3,7 @@ extends CharacterBody3D
 
 const WSPEED = 5.0
 const SSPEED = 7.5
+const CSPEED = 3.0
 const JUMP_VELOCITY = 4.5
 
 var playerFOV = 100
@@ -15,6 +16,10 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var head = $Head
 @onready var camera_3d = $Head/Camera3D
+@onready var collision_shape_standing = $CollisionShape_STANDING
+@onready var collision_shape_crouching = $CollisionShape_CROUCHING
+@onready var head_checker = $Head/HeadChecker
+
 
 
 var camRotation = Vector2(0,0)
@@ -25,6 +30,9 @@ var viewRollAmnt = 1
 var viewRollSpeed = 0.1
 
 const DEFAULT_HEIGHT = 2.0
+const CROUCH_HEIGHT = 1.0
+var crouchSpeed = 10
+var crouchDepth = -0.75
 
 var direction = Vector3.ZERO
 
@@ -63,6 +71,9 @@ func _physics_process(delta):
 	match currentState:
 		CharacterStates.IDLE:
 			if is_on_floor():
+				head.position.y = lerp(head.position.y, 1.5, delta * 8.0)
+				collision_shape_standing.disabled = false
+				collision_shape_crouching.disabled = true
 				velocity.x = 0.0
 				velocity.z = 0.0
 				
@@ -71,7 +82,8 @@ func _physics_process(delta):
 				else:
 					currentState = CharacterStates.IDLE
 				
-				if Input.is_action_pressed("crouch")
+				if Input.is_action_pressed("crouch"):
+					currentState = CharacterStates.CROUCHING
 				
 				if Input.is_action_just_pressed("ui_accept"):
 					currentState = CharacterStates.JUMPING
@@ -79,6 +91,9 @@ func _physics_process(delta):
 				currentState = CharacterStates.FALLING
 		CharacterStates.WALKING:
 			if is_on_floor():
+				head.position.y = lerp(head.position.y, 1.5, delta * 8.0)
+				collision_shape_standing.disabled = false
+				collision_shape_crouching.disabled = true
 				currentSpeed = WSPEED
 				if direction.length() > 0.5:
 					currentState = CharacterStates.WALKING
@@ -88,6 +103,23 @@ func _physics_process(delta):
 					currentState = CharacterStates.SPRINTING
 				if Input.is_action_just_pressed("ui_accept"):
 					currentState = CharacterStates.JUMPING
+				if Input.is_action_pressed("crouch"):
+					currentState = CharacterStates.CROUCHING
+			else:
+				currentState = CharacterStates.FALLING
+		CharacterStates.CROUCHING:
+			if is_on_floor():
+				currentSpeed = CSPEED
+				head.position.y = lerp(head.position.y, 1.5 + crouchDepth, delta * 8.0)
+				collision_shape_standing.disabled = true
+				collision_shape_crouching.disabled = false
+				if Input.is_action_just_pressed("ui_accept"):
+					currentState = CharacterStates.JUMPING
+				if Input.is_action_just_released("crouch") and !head_checker.is_colliding():
+					if direction.length() > 0.5:
+						currentState = CharacterStates.WALKING
+					if direction.length() == 0.0:
+						currentState = CharacterStates.IDLE
 			else:
 				currentState = CharacterStates.FALLING
 		CharacterStates.SPRINTING:

@@ -17,6 +17,7 @@ sky = SubResource("Sky_i8agt")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jhlyu"]
 albedo_texture = ExtResource("4_l5mck")
+uv1_scale = Vector3(0.1, 0.1, 0.1)
 uv1_triplanar = true
 
 [node name="Node3D" type="Node3D"]
@@ -36,6 +37,12 @@ environment = SubResource("Environment_qjp13")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.63814, 2.7, -9.3022)
 use_collision = true
 size = Vector3(5, 5, 5)
+material = SubResource("StandardMaterial3D_jhlyu")
+
+[node name="CSGBox3D3" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.63814, 1.6774, 0.886006)
+use_collision = true
+size = Vector3(2.26475, 0.416029, 5.49068)
 material = SubResource("StandardMaterial3D_jhlyu")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
