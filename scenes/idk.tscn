@@ -1,0 +1,43 @@
+[gd_scene load_steps=9 format=3 uid="uid://bgny5jq485vyl"]
+
+[ext_resource type="Material" uid="uid://3kt6mnabfpt8" path="res://black08.tres" id="1_flpe3"]
+[ext_resource type="PackedScene" uid="uid://bau6naihwnv4f" path="res://fpsplayer.tscn" id="2_3tmfw"]
+[ext_resource type="Texture2D" uid="uid://bda3ej8cvcu81" path="res://hdris/kloofendal_48d_partly_cloudy_puresky_2k.hdr" id="3_7wgxw"]
+[ext_resource type="Texture2D" uid="uid://byf6fuyove7ro" path="res://PNG/Orange/texture_06.png" id="4_l5mck"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_a6f8c"]
+panorama = ExtResource("3_7wgxw")
+
+[sub_resource type="Sky" id="Sky_i8agt"]
+sky_material = SubResource("PanoramaSkyMaterial_a6f8c")
+
+[sub_resource type="Environment" id="Environment_qjp13"]
+background_mode = 2
+sky = SubResource("Sky_i8agt")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jhlyu"]
+albedo_texture = ExtResource("4_l5mck")
+uv1_triplanar = true
+
+[node name="Node3D" type="Node3D"]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+material_override = ExtResource("1_flpe3")
+use_collision = true
+size = Vector3(54.0134, 0.426934, 51.4621)
+
+[node name="fpsplayer" parent="." instance=ExtResource("2_3tmfw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.640289, 0.2, -1.52107)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_qjp13")
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.63814, 2.7, -9.3022)
+use_collision = true
+size = Vector3(5, 5, 5)
+material = SubResource("StandardMaterial3D_jhlyu")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.798257, -0.179385, 0.574984, -0.602317, -0.237741, 0.762033, 1.99578e-10, -0.954621, -0.297825, 0, 9.67987, 0)
+shadow_enabled = true
