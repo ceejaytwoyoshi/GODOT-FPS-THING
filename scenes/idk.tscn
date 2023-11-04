@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://bgny5jq485vyl"]
+[gd_scene load_steps=10 format=3 uid="uid://bgny5jq485vyl"]
 
 [ext_resource type="Material" uid="uid://3kt6mnabfpt8" path="res://black08.tres" id="1_flpe3"]
 [ext_resource type="PackedScene" uid="uid://bau6naihwnv4f" path="res://fpsplayer.tscn" id="2_3tmfw"]
 [ext_resource type="Texture2D" uid="uid://bda3ej8cvcu81" path="res://hdris/kloofendal_48d_partly_cloudy_puresky_2k.hdr" id="3_7wgxw"]
 [ext_resource type="Texture2D" uid="uid://byf6fuyove7ro" path="res://PNG/Orange/texture_06.png" id="4_l5mck"]
+[ext_resource type="Material" path="res://orange5.tres" id="5_yl0ig"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_a6f8c"]
 panorama = ExtResource("3_7wgxw")
@@ -48,3 +49,10 @@ material = SubResource("StandardMaterial3D_jhlyu")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.798257, -0.179385, 0.574984, -0.602317, -0.237741, 0.762033, 1.99578e-10, -0.954621, -0.297825, 0, 9.67987, 0)
 shadow_enabled = true
+
+[node name="CSGPolygon3D" type="CSGPolygon3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.0689, 0.3, 17.1813)
+material_override = ExtResource("5_yl0ig")
+use_collision = true
+polygon = PackedVector2Array(0, 0, -0.3, 9.5, 19.2, -0.2)
+depth = 11.09
