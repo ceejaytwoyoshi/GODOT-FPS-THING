@@ -60,13 +60,12 @@ func _ready():
 
 func _input(event):
 	if event is InputEventMouseMotion:
+		head.rotate_x(deg_to_rad(-event.relative.y * mouseSens))
+		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
 		if currentState == CharacterStates.SLIDING:
 			neck.rotate_y(deg_to_rad(-event.relative.x * mouseSens))
 		else:
 			rotate_y(deg_to_rad(-event.relative.x * mouseSens))
-		
-		head.rotate_x(deg_to_rad(-event.relative.y * mouseSens))
-		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
 
 func _physics_process(delta):
 	var input_dir = Input.get_vector("left", "right", "forward", "backward")
@@ -148,8 +147,8 @@ func _physics_process(delta):
 				head.position.y = lerp(head.position.y, 1.5 + crouchDepth, delta * 8.0)
 				collision_shape_standing.disabled = true
 				collision_shape_crouching.disabled = false
-				velocity.x = direction.x * slideTime 
-				velocity.z = direction.z * slideTime
+				velocity.x = direction.x * slideTime + currentSpeed
+				velocity.z = direction.z * slideTime + currentSpeed
 				
 				
 				if slideTime <= 0.0 or Input.is_action_just_released("crouch") and !head_checker.is_colliding():
@@ -168,6 +167,7 @@ func _physics_process(delta):
 				
 				if slope_checker.is_colliding():
 					slideTime += 0.25
+					currentSpeed += (delta * 2.5)
 				
 				if slideTime <= 0.0 and Input.is_action_just_pressed("crouch"):
 					slideTime = 0.0
@@ -229,13 +229,15 @@ func _physics_process(delta):
 	camAngl = lerp(camAngl, -targetAngl, viewRollSpeed)
 	camera_3d.rotation.z = camAngl
 	
-	print(slideTime)
-	print("State: ", stateNames[currentState])
+	
 	
 	# FOV shit
-	var velocityClamped = clamp(velocity.length(), 0.5, SSPEED * 2)
+	var velocityClamped = clamp(velocity.length(), 0.5, currentSpeed * 2)
 	var targetFOV = playerFOV + FOVCHANGE * velocityClamped
 	camera_3d.fov = lerp(camera_3d.fov, targetFOV, delta * 5.0)
+	
+	print("State: ", stateNames[currentState])
+	print(velocityClamped)
 
 
 func _on_slide_timer_timeout():

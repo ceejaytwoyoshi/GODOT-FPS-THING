@@ -1,0 +1,38 @@
+[gd_scene load_steps=5 format=3 uid="uid://bau6naihwnv4f"]
+
+[ext_resource type="Script" path="res://fpsplayer.gd" id="1_tgw8n"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xi6x2"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_j7hlj"]
+height = 1.2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ot6xm"]
+size = Vector3(0.4, 1, 0.04)
+
+[node name="fpsplayer" type="CharacterBody3D"]
+script = ExtResource("1_tgw8n")
+
+[node name="CollisionShape_STANDING" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_xi6x2")
+
+[node name="CollisionShape_CROUCHING" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.599843, 0)
+shape = SubResource("CapsuleShape3D_j7hlj")
+disabled = true
+
+[node name="Neck" type="Node3D" parent="."]
+
+[node name="Head" type="Node3D" parent="Neck"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Neck/Head"]
+
+[node name="HeadChecker" type="RayCast3D" parent="Neck/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.00102293, 0)
+target_position = Vector3(0, 1.16, 0)
+
+[node name="SlopeChecker" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0.258977, 0)
+shape = SubResource("BoxShape3D_ot6xm")
