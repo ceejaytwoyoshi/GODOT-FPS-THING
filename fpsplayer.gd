@@ -168,6 +168,8 @@ func _physics_process(delta):
 				if slope_checker.is_colliding():
 					slideTime += 0.25
 					currentSpeed += (delta * 2.5)
+				else:
+					currentSpeed -= (delta * slideTime)
 				
 				if slideTime <= 0.0 and Input.is_action_just_pressed("crouch"):
 					slideTime = 0.0
@@ -238,7 +240,3 @@ func _physics_process(delta):
 	
 	print("State: ", stateNames[currentState])
 	print(velocityClamped)
-
-
-func _on_slide_timer_timeout():
-	pass # Replace with function body.
