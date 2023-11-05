@@ -8,7 +8,7 @@
 height = 1.2
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ot6xm"]
-size = Vector3(1, 1, 0.22)
+size = Vector3(0.4, 1, 0.04)
 
 [node name="fpsplayer" type="CharacterBody3D"]
 script = ExtResource("1_tgw8n")

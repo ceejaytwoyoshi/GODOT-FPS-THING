@@ -71,12 +71,12 @@ func _input(event):
 func _physics_process(delta):
 	var input_dir = Input.get_vector("left", "right", "forward", "backward")
 	head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
+	head.position.y = lerp(head.position.y, 1.5, delta * 8.0)
+	collision_shape_standing.disabled = false
+	collision_shape_crouching.disabled = true
 	match currentState:
 		CharacterStates.IDLE:
 			if is_on_floor():
-				head.position.y = lerp(head.position.y, 1.5, delta * 8.0)
-				collision_shape_standing.disabled = false
-				collision_shape_crouching.disabled = true
 				velocity.x = 0.0
 				velocity.z = 0.0
 				
@@ -94,9 +94,6 @@ func _physics_process(delta):
 				currentState = CharacterStates.FALLING
 		CharacterStates.WALKING:
 			if is_on_floor():
-				head.position.y = lerp(head.position.y, 1.5, delta * 8.0)
-				collision_shape_standing.disabled = false
-				collision_shape_crouching.disabled = true
 				currentSpeed = WSPEED
 				if direction.length() > 0.5:
 					currentState = CharacterStates.WALKING
@@ -142,46 +139,49 @@ func _physics_process(delta):
 			else:
 				currentState = CharacterStates.FALLING
 		CharacterStates.SLIDING:
-			slideTime -= delta
-			
-			direction = (transform.basis * Vector3(slideVec.x, 0.0, slideVec.y)).normalized() 
-			
-			head.rotation.z = lerp(camera_3d.rotation.z, -deg_to_rad(15.0), delta * 5.0)
-			head.position.y = lerp(head.position.y, 1.5 + crouchDepth, delta * 8.0)
-			collision_shape_standing.disabled = true
-			collision_shape_crouching.disabled = false
-			velocity.x = direction.x * slideTime 
-			velocity.z = direction.z * slideTime
-			
-			
-			if slideTime <= 0.0 or Input.is_action_just_released("crouch") and !head_checker.is_colliding():
-				slideTime = 0.0 
-				if direction.length() <= 0.5:
-					currentState = CharacterStates.IDLE
-				elif direction.length() > 0.5:
-					currentState = CharacterStates.WALKING
-				self.rotation.y += neck.rotation.y
-				neck.rotation.y = 0.0
-				head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
-			
-			if slideTime <= 0.0 and head_checker.is_colliding():
-				await get_tree().create_timer(0.001).timeout
-				currentState = CharacterStates.CROUCHING
-			
-			if slope_checker.is_colliding():
-				slideTime += 0.25
-			
-			if slideTime <= 0.0 and Input.is_action_just_pressed("crouch"):
-				slideTime = 0.0
-				currentState = CharacterStates.CROUCHING
-				if Input.is_action_just_released("crouch"):
+			if is_on_floor():
+				slideTime -= delta
+				
+				direction = (transform.basis * Vector3(slideVec.x, 0.0, slideVec.y)).normalized() 
+				
+				head.rotation.z = lerp(camera_3d.rotation.z, -deg_to_rad(15.0), delta * 5.0)
+				head.position.y = lerp(head.position.y, 1.5 + crouchDepth, delta * 8.0)
+				collision_shape_standing.disabled = true
+				collision_shape_crouching.disabled = false
+				velocity.x = direction.x * slideTime 
+				velocity.z = direction.z * slideTime
+				
+				
+				if slideTime <= 0.0 or Input.is_action_just_released("crouch") and !head_checker.is_colliding():
+					slideTime = 0.0 
 					if direction.length() <= 0.5:
 						currentState = CharacterStates.IDLE
 					elif direction.length() > 0.5:
 						currentState = CharacterStates.WALKING
-				self.rotation.y += neck.rotation.y
-				neck.rotation.y = 0.0
-				head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
+					self.rotation.y += neck.rotation.y
+					neck.rotation.y = 0.0
+					head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
+				
+				if slideTime <= 0.0 and head_checker.is_colliding():
+					await get_tree().create_timer(0.001).timeout
+					currentState = CharacterStates.CROUCHING
+				
+				if slope_checker.is_colliding():
+					slideTime += 0.25
+				
+				if slideTime <= 0.0 and Input.is_action_just_pressed("crouch"):
+					slideTime = 0.0
+					currentState = CharacterStates.CROUCHING
+					if Input.is_action_just_released("crouch"):
+						if direction.length() <= 0.5:
+							currentState = CharacterStates.IDLE
+						elif direction.length() > 0.5:
+							currentState = CharacterStates.WALKING
+					self.rotation.y += neck.rotation.y
+					neck.rotation.y = 0.0
+					head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
+			else:
+				currentState = CharacterStates.FALLING
 			
 			
 		CharacterStates.JUMPING:
