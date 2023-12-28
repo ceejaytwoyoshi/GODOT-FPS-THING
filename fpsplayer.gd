@@ -143,7 +143,6 @@ func _physics_process(delta):
 				
 				direction = (transform.basis * Vector3(slideVec.x, 0.0, slideVec.y)).normalized() 
 				
-				head.rotation.z = lerp(camera_3d.rotation.z, -deg_to_rad(15.0), delta * 5.0)
 				head.position.y = lerp(head.position.y, 1.5 + crouchDepth, delta * 8.0)
 				collision_shape_standing.disabled = true
 				collision_shape_crouching.disabled = false
@@ -231,6 +230,12 @@ func _physics_process(delta):
 	camAngl = lerp(camAngl, -targetAngl, viewRollSpeed)
 	camera_3d.rotation.z = camAngl
 	
+	#View Tilt when SLIDING (i s2g if this actually works i'm going to scream)
+	
+	if currentState == CharacterStates.SLIDING:
+		neck.rotation.z = lerp(camera_3d.rotation.z, -deg_to_rad(15.0), delta * 1.5)
+	else:
+		neck.rotation.z = lerp(camera_3d.rotation.z, 0.0, delta * 1.5)
 	
 	
 	# FOV shit
