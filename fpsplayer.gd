@@ -180,7 +180,7 @@ func _physics_process(delta):
 							currentState = CharacterStates.WALKING
 					self.rotation.y += neck.rotation.y
 					neck.rotation.y = 0.0
-					head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
+					head.rotation.z = lerp(head.rotation.z, 0.0, delta)
 			else:
 				currentState = CharacterStates.FALLING
 			
