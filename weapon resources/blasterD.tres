@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3 uid="uid://dnoj4lpae5dy0"]
+
+[ext_resource type="Script" path="res://weapon_resource.gd" id="1_cnerw"]
+
+[resource]
+script = ExtResource("1_cnerw")
+weaponName = "Blaster D"
+equipAnim = "BlasterD_Equip"
+shootAnim = "BlasterD_Shoot"
+reloadAnim = "BlasterD_Reload"
+unequipAnim = "BlasterD_Unequip"
+OOAAnim = "BlasterD_OOA"
+currentAmmo = 30
+reserveAmmo = 165
+magSize = 30
+maxAmmo = 330
+autoFire = true
+attackType = 1
+weaponRange = 2000
+damage = 15

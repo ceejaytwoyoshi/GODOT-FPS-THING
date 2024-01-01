@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://c430vp3dr88qs"]
+
+[ext_resource type="Texture2D" uid="uid://c7r1qdiy05wd" path="res://weapon resources/crosshair046.png" id="1_7tw02"]
+[ext_resource type="Script" path="res://weapon resources/bullet_debug.gd" id="2_sxrkg"]
+
+[node name="bullet_debug" type="Sprite3D"]
+modulate = Color(0.690196, 0, 0.12549, 1)
+billboard = 2
+texture = ExtResource("1_7tw02")
+script = ExtResource("2_sxrkg")
+
+[node name="Timer" type="Timer" parent="."]
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

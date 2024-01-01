@@ -1,13 +1,17 @@
 extends CharacterBody3D
 
 
-const WSPEED = 5.0
-const SSPEED = 7.5
+const WSPEED = 6.0
+const SSPEED = 7.0
 const CSPEED = 3.0
 const JUMP_VELOCITY = 4.5
 
 var playerFOV = 100
 const FOVCHANGE = 1.5
+
+var bobTime = 0.0
+const BOB_FREQ = 1.25
+const BOB_AMP = 0.015
 
 @onready var currentSpeed = WSPEED
 
@@ -21,7 +25,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var collision_shape_crouching = $CollisionShape_CROUCHING
 @onready var head_checker = $Neck/Head/HeadChecker
 @onready var slope_checker = $SlopeChecker
-
+@onready var hands = $Neck/Head/Camera3D/WeaponManager/Hands
 
 
 var mouseSens = 0.15
@@ -35,8 +39,7 @@ const CROUCH_HEIGHT = 1.0
 var crouchSpeed = 10
 var crouchDepth = -0.75
 
-var slideTime = 0.0
-var slideTimeMax = 1.5
+var slideDecelRate = 15.0
 var slideVec = Vector2.ZERO
 
 
@@ -69,6 +72,8 @@ func _input(event):
 
 func _physics_process(delta):
 	var input_dir = Input.get_vector("left", "right", "forward", "backward")
+	var velocityClamped = clamp(velocity.length(), 0.5, currentSpeed * 2)
+	var velocityRounded = snapped(velocity.length(), 0.001)
 	head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
 	head.position.y = lerp(head.position.y, 1.5, delta * 8.0)
 	collision_shape_standing.disabled = false
@@ -98,7 +103,7 @@ func _physics_process(delta):
 					currentState = CharacterStates.WALKING
 				else:
 					currentState = CharacterStates.IDLE
-				if Input.is_action_pressed("sprint") and (!input_dir == Vector2.DOWN and input_dir.x == 0):
+				if Input.is_action_pressed("sprint") and (!input_dir == Vector2.DOWN):
 					currentState = CharacterStates.SPRINTING
 				if Input.is_action_just_pressed("ui_accept"):
 					currentState = CharacterStates.JUMPING
@@ -133,25 +138,22 @@ func _physics_process(delta):
 					currentState = CharacterStates.JUMPING
 				if Input.is_action_pressed("crouch"):
 					currentState = CharacterStates.SLIDING
-					slideTime = slideTimeMax
 					slideVec = input_dir
 			else:
 				currentState = CharacterStates.FALLING
 		CharacterStates.SLIDING:
 			if is_on_floor():
-				slideTime -= delta
 				
 				direction = (transform.basis * Vector3(slideVec.x, 0.0, slideVec.y)).normalized() 
 				
 				head.position.y = lerp(head.position.y, 1.5 + crouchDepth, delta * 8.0)
 				collision_shape_standing.disabled = true
 				collision_shape_crouching.disabled = false
-				velocity.x = direction.x * slideTime + currentSpeed
-				velocity.z = direction.z * slideTime + currentSpeed
+				velocity.x = (direction.x * currentSpeed) - (delta)
+				velocity.z = (direction.z * currentSpeed) - (delta)
 				
 				
-				if slideTime <= 0.0 or Input.is_action_just_released("crouch") and !head_checker.is_colliding():
-					slideTime = 0.0 
+				if velocityRounded <= 1.750 or Input.is_action_just_released("crouch") and !head_checker.is_colliding():
 					if direction.length() <= 0.5:
 						currentState = CharacterStates.IDLE
 					elif direction.length() > 0.5:
@@ -160,18 +162,16 @@ func _physics_process(delta):
 					neck.rotation.y = 0.0
 					head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
 				
-				if slideTime <= 0.0 and head_checker.is_colliding():
+				if velocityRounded <= 1.750 and head_checker.is_colliding():
 					await get_tree().create_timer(0.001).timeout
 					currentState = CharacterStates.CROUCHING
 				
 				if slope_checker.is_colliding():
-					slideTime += 0.25
 					currentSpeed += (delta * 2.5)
 				else:
-					currentSpeed -= (delta * slideTime)
+					currentSpeed -= delta
 				
-				if slideTime <= 0.0 and Input.is_action_just_pressed("crouch"):
-					slideTime = 0.0
+				if velocityRounded <= 1.750 and Input.is_action_just_pressed("crouch"):
 					currentState = CharacterStates.CROUCHING
 					if Input.is_action_just_released("crouch"):
 						if direction.length() <= 0.5:
@@ -183,8 +183,6 @@ func _physics_process(delta):
 					head.rotation.z = lerp(head.rotation.z, 0.0, delta)
 			else:
 				currentState = CharacterStates.FALLING
-			
-			
 		CharacterStates.JUMPING:
 			if is_on_floor():
 				velocity.y = JUMP_VELOCITY
@@ -200,13 +198,10 @@ func _physics_process(delta):
 				
 				if Input.is_action_pressed("sprint") and Input.is_action_pressed("crouch") and input_dir != Vector2.ZERO:
 					currentState = CharacterStates.SLIDING
-					slideTime = slideTimeMax
 					slideVec = input_dir
 			else:
 				velocity.y -= gravity * delta
 	
-	if slideTime >= slideTimeMax:
-		slideTime = slideTimeMax
 	
 	# MOVEMENT AND SHIT
 
@@ -216,8 +211,8 @@ func _physics_process(delta):
 			velocity.x = direction.x * currentSpeed 
 			velocity.z = direction.z * currentSpeed
 		else:
-			velocity.x = lerp(velocity.x, direction.x * currentSpeed, delta * 7.0)
-			velocity.z = lerp(velocity.z, direction.z * currentSpeed, delta * 7.0)
+			velocity.x = lerp(velocity.x, direction.x * currentSpeed, delta * 5.0)
+			velocity.z = lerp(velocity.z, direction.z * currentSpeed, delta * 5.0)
 	else:
 		velocity.x = lerp(velocity.x, direction.x * currentSpeed, delta * 3.0)
 		velocity.z = lerp(velocity.z, direction.z * currentSpeed, delta * 3.0)
@@ -230,6 +225,11 @@ func _physics_process(delta):
 	camAngl = lerp(camAngl, -targetAngl, viewRollSpeed)
 	camera_3d.rotation.z = camAngl
 	
+	#Weapon Viewbob
+	bobTime += delta * velocityClamped* float(is_on_floor())
+	hands.transform.origin = _viewmodelBob(bobTime)
+	
+	
 	#View Tilt when SLIDING (i s2g if this actually works i'm going to scream)
 	
 	if currentState == CharacterStates.SLIDING:
@@ -239,9 +239,13 @@ func _physics_process(delta):
 	
 	
 	# FOV shit
-	var velocityClamped = clamp(velocity.length(), 0.5, currentSpeed * 2)
 	var targetFOV = playerFOV + FOVCHANGE * velocityClamped
 	camera_3d.fov = lerp(camera_3d.fov, targetFOV, delta * 5.0)
 	
-	print("State: ", stateNames[currentState])
-	print(velocityClamped)
+	#print("State: ", stateNames[currentState])
+
+func _viewmodelBob(time) -> Vector3:
+	var pos = Vector3.ZERO
+	pos.y = sin(time * BOB_FREQ) * BOB_AMP
+	pos.x = cos(time * BOB_FREQ / 2) * BOB_AMP
+	return pos

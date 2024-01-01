@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WeaponResource" load_steps=2 format=3 uid="uid://bundc1niqbs1t"]
+
+[ext_resource type="Script" path="res://weapon_resource.gd" id="1_2cfia"]
+
+[resource]
+script = ExtResource("1_2cfia")
+weaponName = "Blaster N"
+equipAnim = "BlasterN_Equip"
+shootAnim = "BlasterN_Shoot"
+reloadAnim = " BlasterN_Reload"
+unequipAnim = "BlasterN_Unequip"
+OOAAnim = "BlasterN_OOA"
+currentAmmo = 10
+reserveAmmo = 60
+magSize = 10
+maxAmmo = 120
+autoFire = false
+attackType = 1
+weaponRange = 1250
+damage = 5
