@@ -6,12 +6,8 @@ const SSPEED = 7.0
 const CSPEED = 3.0
 const JUMP_VELOCITY = 4.5
 
-var playerFOV = 100
-const FOVCHANGE = 1.5
 
-var bobTime = 0.0
-const BOB_FREQ = 1.25
-const BOB_AMP = 0.015
+var canMove = true
 
 @onready var currentSpeed = WSPEED
 
@@ -20,7 +16,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var neck = $Neck
 @onready var head = $Neck/Head
-@onready var camera_3d = $Neck/Head/Camera3D
+@onready var camera_3d = $Neck/Head/CameraShake/Camera3D
 @onready var collision_shape_standing = $CollisionShape_STANDING
 @onready var collision_shape_crouching = $CollisionShape_CROUCHING
 @onready var head_checker = $Neck/Head/HeadChecker
@@ -29,10 +25,6 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 
 var mouseSens = 0.15
-var camAngl = 0.0
-var targetAngl = 0.0
-var viewRollAmnt = 1
-var viewRollSpeed = 0.1
 
 const DEFAULT_HEIGHT = 2.0
 const CROUCH_HEIGHT = 1.0
@@ -72,7 +64,6 @@ func _input(event):
 
 func _physics_process(delta):
 	var input_dir = Input.get_vector("left", "right", "forward", "backward")
-	var velocityClamped = clamp(velocity.length(), 0.5, currentSpeed * 2)
 	var velocityRounded = snapped(velocity.length(), 0.001)
 	head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
 	head.position.y = lerp(head.position.y, 1.5, delta * 8.0)
@@ -143,7 +134,7 @@ func _physics_process(delta):
 				currentState = CharacterStates.FALLING
 		CharacterStates.SLIDING:
 			if is_on_floor():
-				
+				canMove = false
 				direction = (transform.basis * Vector3(slideVec.x, 0.0, slideVec.y)).normalized() 
 				
 				head.position.y = lerp(head.position.y, 1.5 + crouchDepth, delta * 8.0)
@@ -161,6 +152,7 @@ func _physics_process(delta):
 					self.rotation.y += neck.rotation.y
 					neck.rotation.y = 0.0
 					head.rotation.z = lerp(head.rotation.z, 0.0, delta * 8.0)
+					canMove = true
 				
 				if velocityRounded <= 1.750 and head_checker.is_colliding():
 					await get_tree().create_timer(0.001).timeout
@@ -171,7 +163,7 @@ func _physics_process(delta):
 				else:
 					currentSpeed -= delta
 				
-				if velocityRounded <= 1.750 and Input.is_action_just_pressed("crouch"):
+				if velocityRounded <= 1.750 and Input.is_action_pressed("crouch"):
 					currentState = CharacterStates.CROUCHING
 					if Input.is_action_just_released("crouch"):
 						if direction.length() <= 0.5:
@@ -181,6 +173,7 @@ func _physics_process(delta):
 					self.rotation.y += neck.rotation.y
 					neck.rotation.y = 0.0
 					head.rotation.z = lerp(head.rotation.z, 0.0, delta)
+					canMove = true
 			else:
 				currentState = CharacterStates.FALLING
 		CharacterStates.JUMPING:
@@ -190,15 +183,18 @@ func _physics_process(delta):
 				currentState = CharacterStates.FALLING
 		CharacterStates.FALLING:
 			if is_on_floor():
-				velocity.y = 0
-				if direction.length() > 0.5:
-					currentState = CharacterStates.WALKING
-				else:
-					currentState = CharacterStates.IDLE
-				
 				if Input.is_action_pressed("sprint") and Input.is_action_pressed("crouch") and input_dir != Vector2.ZERO:
 					currentState = CharacterStates.SLIDING
 					slideVec = input_dir
+				else:
+					if direction.length() > 0.5:
+						currentState = CharacterStates.WALKING
+						direction = lerp(direction, (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized(), delta*10.0)
+					else:
+						currentState = CharacterStates.IDLE
+						direction = lerp(direction, (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized(), delta*10.0)
+					canMove = true
+				
 			else:
 				velocity.y -= gravity * delta
 	
@@ -207,45 +203,17 @@ func _physics_process(delta):
 
 	direction = lerp(direction, (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized(), delta*10.0)
 	if is_on_floor():
-		if direction:
-			velocity.x = direction.x * currentSpeed 
+		if direction and canMove:
+			velocity.x = direction.x * currentSpeed
 			velocity.z = direction.z * currentSpeed
 		else:
 			velocity.x = lerp(velocity.x, direction.x * currentSpeed, delta * 5.0)
 			velocity.z = lerp(velocity.z, direction.z * currentSpeed, delta * 5.0)
 	else:
-		velocity.x = lerp(velocity.x, direction.x * currentSpeed, delta * 3.0)
-		velocity.z = lerp(velocity.z, direction.z * currentSpeed, delta * 3.0)
+		velocity.x = lerp(velocity.x, direction.x * currentSpeed, delta * 5.0)
+		velocity.z = lerp(velocity.z, direction.z * currentSpeed, delta * 5.0)
 	
 	move_and_slide()
 	
-	#View Tilt
 	
-	targetAngl = input_dir.x * viewRollAmnt * delta
-	camAngl = lerp(camAngl, -targetAngl, viewRollSpeed)
-	camera_3d.rotation.z = camAngl
-	
-	#Weapon Viewbob
-	bobTime += delta * velocityClamped* float(is_on_floor())
-	hands.transform.origin = _viewmodelBob(bobTime)
-	
-	
-	#View Tilt when SLIDING (i s2g if this actually works i'm going to scream)
-	
-	if currentState == CharacterStates.SLIDING:
-		neck.rotation.z = lerp(camera_3d.rotation.z, -deg_to_rad(15.0), delta * 1.5)
-	else:
-		neck.rotation.z = lerp(camera_3d.rotation.z, 0.0, delta * 1.5)
-	
-	
-	# FOV shit
-	var targetFOV = playerFOV + FOVCHANGE * velocityClamped
-	camera_3d.fov = lerp(camera_3d.fov, targetFOV, delta * 5.0)
-	
-	#print("State: ", stateNames[currentState])
-
-func _viewmodelBob(time) -> Vector3:
-	var pos = Vector3.ZERO
-	pos.y = sin(time * BOB_FREQ) * BOB_AMP
-	pos.x = cos(time * BOB_FREQ / 2) * BOB_AMP
-	return pos
+	#print(stateNames[currentState])

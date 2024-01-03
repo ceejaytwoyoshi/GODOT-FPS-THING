@@ -14,6 +14,8 @@ class_name WeaponResource
 @export var magSize: int
 @export var maxAmmo: int
 
+@export var weaponSpread: float
+
 @export var autoFire: bool
 
 @export_flags("Hitscan", "Projectile") var attackType

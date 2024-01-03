@@ -18,17 +18,22 @@ var weaponList = {}
 
 var debugBullet = preload("res://weapon resources/bullet_debug.tscn")
 
+var shotCount = 0
+
 @export var _weapon_resources: Array[WeaponResource]
 
 @export var startWeapons: Array[String]
 @onready var bulletPoint = $Hands/BulletPoint
+@onready var spreadTimer = $SpreadTimer
 
 enum {NULL, HITSCAN, PROJECTILE}
 
+@export var camera_shake: CameraShake
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initialize(startWeapons)
+	randomize()
 
 func _input(event):
 	if event.is_action_pressed("weapon_up"):
@@ -83,6 +88,13 @@ func _on_animation_player_animation_finished(anim_name):
 
 func shoot():
 	if currentWeapon.currentAmmo != 0 and !Animation_Player.is_playing():
+		spreadTimer.start()
+		camera_shake.add_trauma(1.0)
+		#if !spreadTimer.is_stopped():
+			#print("spread timer active")
+		
+		shotCount +=1
+		print("Shot Count: " + str(shotCount))
 		Animation_Player.play(currentWeapon.shootAnim)
 		currentWeapon.currentAmmo -= 1
 		emit_signal("updateAmmo", [currentWeapon.currentAmmo, currentWeapon.reserveAmmo])
@@ -119,6 +131,15 @@ func get_camera_collision()->Vector3:
 	var rayOrigin = camera.project_ray_origin(viewport/2)
 	var rayEnd = rayOrigin + camera.project_ray_normal(viewport/2) * currentWeapon.weaponRange
 	
+	if shotCount > 1 and !spreadTimer.is_stopped():
+		#print("Spread Active")
+		rayEnd.x = rayEnd.x + randf_range(currentWeapon.weaponSpread, -currentWeapon.weaponSpread)
+		rayEnd.y = rayEnd.y + randf_range(currentWeapon.weaponSpread, -currentWeapon.weaponSpread)
+	else:
+		rayEnd = rayOrigin + camera.project_ray_normal(viewport/2) * currentWeapon.weaponRange
+	
+	print(rayEnd.x, " ", rayEnd.y)
+	
 	var newIntersection = PhysicsRayQueryParameters3D.create(rayOrigin, rayEnd)
 	var intersection = get_world_3d().direct_space_state.intersect_ray(newIntersection)
 	
@@ -147,3 +168,8 @@ func hitscanDamage(col):
 	if col.is_in_group("target") and col.has_method("hitSuccess"):
 		col.hitSuccess(currentWeapon.damage)
 		print("IT'S WORKING?!?!")
+
+
+func _on_spread_timer_timeout():
+	shotCount = 0
+	#print("spread timer stop")
